@@ -7,15 +7,9 @@ import networkx as nx
 
 path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
 fc_path = path + 'fc_matrix/'
-net_path = path + 'net_metric/'
-if not os.path.exists(net_path):
-    os.makedirs(net_path)
 
 # build/complete metadata
 metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata.csv')
-genot = metadata["genot"].unique()
-subjects = {genot[0]: list(metadata.loc[metadata['genot'] == genot[0], 'id_mouse']),
-            genot[1]: list(metadata.loc[metadata['genot'] == genot[1], 'id_mouse'])}
 
 G_ctr_min = []
 G_ctr_max = []
@@ -30,8 +24,8 @@ for sub in metadata['id_mouse']:
     edges = edges.drop(edges.columns[1], axis = 1)
     edges = edges.rename(columns = {"pre": "source", "post": "target", "sp_trans_p": "weight"})
 
-    G_ctr = nx.from_pandas_edgelist(edges[edges['treatment'] == 'ctr'], edge_attr = True, create_using = nx.DiGraph())
-    G_a5ia = nx.from_pandas_edgelist(edges[edges['treatment'] == 'a5ia'], edge_attr = True,  create_using = nx.DiGraph())
+    G_ctr = nx.from_pandas_edgelist(edges[edges['treatment'] == 'ctr'], edge_attr=True, create_using = nx.DiGraph())
+    G_a5ia = nx.from_pandas_edgelist(edges[edges['treatment'] == 'a5ia'], edge_attr=True,  create_using = nx.DiGraph())
 
     # nodes info
     nodes = pd.read_csv(nodes_file)
@@ -60,7 +54,15 @@ for sub in metadata['id_mouse']:
 
     num_nodes = np.append(num_nodes, np.shape(G_ctr)[0])
 
+metadata_ = pd.DataFrame()
+metadata_['id_mouse'] = metadata['id_mouse']
+metadata_['genot'] = metadata['genot']
+metadata_['G_ctr_min'] = G_ctr_min
+metadata_['G_ctr_max'] = G_ctr_max
+metadata_['G_a5ia_min'] = G_a5ia_min
+metadata_['G_a5ia_max'] = G_a5ia_max
+metadata_['num_nodes'] = num_nodes
 
-
-
+# save completed metadata
+metadata_.to_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv', index=False)
 
