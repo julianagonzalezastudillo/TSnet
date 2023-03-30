@@ -34,8 +34,7 @@ metadata_['id_mouse'] = metadata['id_mouse']
 metadata_['genot'] = metadata['genot']
 states = ['ctr', 'a5ia']
 
-num_nodes_ctr = []
-num_nodes_a5ia = []
+num_nodes = []
 for sub in metadata['id_mouse']:
     edges_file = fc_path + '{0}_edges.csv'.format(sub)
     nodes_file = fc_path + '{0}_node_attributes.csv'.format(sub)
@@ -45,6 +44,7 @@ for sub in metadata['id_mouse']:
 
     # nodes to keep that at least have one connection in one of the states
     keep_nodes = np.sort(np.unique([edges['pre'], edges['post']]))
+    num_nodes = np.append(num_nodes, len(keep_nodes))
 
     for sub_state in states:
         edges_state = edges[edges['treatment'] == sub_state]
@@ -54,13 +54,6 @@ for sub in metadata['id_mouse']:
         G = nx.from_numpy_array(G_, create_using = nx.DiGraph)
         mapping = dict(zip(G, keep_nodes))
         G = nx.relabel_nodes(G, mapping)
-
-        # get number of nodes
-        num_nodes = np.shape(G_)[0]
-        if sub_state == 'ctr':
-            num_nodes_ctr = np.append(num_nodes_ctr, num_nodes)
-        else:
-            num_nodes_a5ia = np.append(num_nodes_a5ia, num_nodes)
 
         # nodes info
         nodes_region = pd.read_csv(nodes_file)
@@ -75,23 +68,21 @@ for sub in metadata['id_mouse']:
         net_file = fc_path + '{0}_{1}_net'.format(sub, sub_state)
         pickle.dump(G, open('{0}.pickle'.format(net_file), 'wb'))
 
-
-metadata_['num_nodes_ctr'] = num_nodes_ctr
-metadata_['num_nodes_a5ia'] = num_nodes_a5ia
+metadata_['num_nodes'] = num_nodes
 
 # save completed metadata
 metadata_.to_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv', index=False)
 
 # to check with plot
-import matplotlib.pyplot as plt
-fig = plt.figure(figsize = (5, 5), dpi = 600)
-ax = plt.subplot()
-im = ax.imshow(G_)
-fig.suptitle(sub)
-plt.show()
-
-fig = plt.figure(figsize = (5, 5), dpi = 600)
-ax = plt.subplot()
-im = ax.imshow(nx.to_numpy_array(G))
-fig.suptitle(sub)
-plt.show()
+# import matplotlib.pyplot as plt
+# fig = plt.figure(figsize = (5, 5), dpi = 600)
+# ax = plt.subplot()
+# im = ax.imshow(G_)
+# fig.suptitle(sub)
+# plt.show()
+#
+# fig = plt.figure(figsize = (5, 5), dpi = 600)
+# ax = plt.subplot()
+# im = ax.imshow(nx.to_numpy_array(G))
+# fig.suptitle(sub)
+# plt.show()
