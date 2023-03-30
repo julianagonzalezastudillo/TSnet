@@ -3,6 +3,25 @@ import pickle
 import numpy as np
 import pandas as pd
 import networkx as nx
+# import matplotlib.pyplot as plt
+
+
+def build_matrix(df_edges, n):
+    matrix = np.zeros((n, n), dtype=float)  # matrix (n,n)
+    for i, j, w in df_edges[['pre', 'post', 'sp_trans_p']].values:
+        matrix[int(i)][int(j)] = w
+    return matrix
+
+
+def df_to_array(df_edges, nodes):
+    n = np.max(nodes) + 1
+    matrix = build_matrix(df_edges, n)
+    n_zero = np.where(~matrix.any(axis=1))[0]
+    contained = [n in nodes for n in n_zero]
+    n_zero = n_zero[~np.array(contained)]
+    matrix = np.delete(matrix, n_zero, axis=0)
+    matrix = np.delete(matrix, n_zero, axis=1)
+    return matrix
 
 
 path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
@@ -10,59 +29,69 @@ fc_path = path + 'fc_matrix/'
 
 # build/complete metadata
 metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata.csv')
+metadata_ = pd.DataFrame()
+metadata_['id_mouse'] = metadata['id_mouse']
+metadata_['genot'] = metadata['genot']
+states = ['ctr', 'a5ia']
 
-G_ctr_min = []
-G_ctr_max = []
-G_a5ia_min = []
-G_a5ia_max = []
-num_nodes = []
+num_nodes_ctr = []
+num_nodes_a5ia = []
 for sub in metadata['id_mouse']:
     edges_file = fc_path + '{0}_edges.csv'.format(sub)
     nodes_file = fc_path + '{0}_node_attributes.csv'.format(sub)
 
     edges = pd.read_csv(edges_file)
     edges = edges.drop(edges.columns[1], axis = 1)
-    edges = edges.rename(columns = {"pre": "source", "post": "target", "sp_trans_p": "weight"})
 
-    G_ctr = nx.from_pandas_edgelist(edges[edges['treatment'] == 'ctr'], edge_attr=True, create_using = nx.DiGraph())
-    G_a5ia = nx.from_pandas_edgelist(edges[edges['treatment'] == 'a5ia'], edge_attr=True,  create_using = nx.DiGraph())
+    # nodes to keep that at least have one connection in one of the states
+    keep_nodes = np.sort(np.unique([edges['pre'], edges['post']]))
 
-    # nodes info
-    nodes = pd.read_csv(nodes_file)
-    nodes = nodes.drop(nodes.columns[0], axis=1)
-    # nodes = nodes.set_index('node_id').T.to_dict('tight')
+    for sub_state in states:
+        edges_state = edges[edges['treatment'] == sub_state]
+        G_ = df_to_array(edges_state, keep_nodes)  # create array from csv
 
-    # add node attributes
-    region = nodes.set_index('node_id')['region'].to_dict()
-    nx.set_node_attributes(G_ctr, region, "region")
-    nx.set_node_attributes(G_a5ia, region, "region")
+        # convert to networkx graph object
+        G = nx.from_numpy_array(G_, create_using = nx.DiGraph)
+        mapping = dict(zip(G, keep_nodes))
+        G = nx.relabel_nodes(G, mapping)
 
-    # save graph object to file
-    net_file_ctr = fc_path + '{0}_ctr_net'.format(sub)
-    pickle.dump(G_ctr, open('{0}.pickle'.format(net_file_ctr), 'wb'))
-    net_file_a5ia = fc_path + '{0}_a5ia_net'.format(sub)
-    pickle.dump(G_a5ia, open('{0}.pickle'.format(net_file_a5ia), 'wb'))
+        # get number of nodes
+        num_nodes = np.shape(G_)[0]
+        if sub_state == 'ctr':
+            num_nodes_ctr = np.append(num_nodes_ctr, num_nodes)
+        else:
+            num_nodes_a5ia = np.append(num_nodes_a5ia, num_nodes)
 
-    G_ctr = nx.to_numpy_array(G_ctr)
-    G_a5ia = nx.to_numpy_array(G_a5ia)
+        # nodes info
+        nodes_region = pd.read_csv(nodes_file)
+        nodes_region = nodes_region.drop(nodes_region.columns[0], axis=1)
+        nodes_region = nodes_region[nodes_region['node_id'].isin(keep_nodes)]  # select keep_nodes
 
-    # get max, min and number of nodes
-    G_ctr_min = np.append(G_ctr_min, np.min(G_ctr))
-    G_ctr_max = np.append(G_ctr_max, np.max(G_ctr))
-    G_a5ia_min = np.append(G_a5ia_min, np.min(G_a5ia))
-    G_a5ia_max = np.append(G_a5ia_max, np.max(G_a5ia))
+        # add node attributes
+        region = nodes_region.set_index('node_id')['region'].to_dict()
+        nx.set_node_attributes(G, region, "region")
 
-    num_nodes = np.append(num_nodes, np.shape(G_ctr)[0])
+        # save graph object to file
+        net_file = fc_path + '{0}_{1}_net'.format(sub, sub_state)
+        pickle.dump(G, open('{0}.pickle'.format(net_file), 'wb'))
 
-metadata_ = pd.DataFrame()
-metadata_['id_mouse'] = metadata['id_mouse']
-metadata_['genot'] = metadata['genot']
-metadata_['G_ctr_min'] = G_ctr_min
-metadata_['G_ctr_max'] = G_ctr_max
-metadata_['G_a5ia_min'] = G_a5ia_min
-metadata_['G_a5ia_max'] = G_a5ia_max
-metadata_['num_nodes'] = num_nodes
+
+metadata_['num_nodes_ctr'] = num_nodes_ctr
+metadata_['num_nodes_a5ia'] = num_nodes_a5ia
 
 # save completed metadata
 metadata_.to_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv', index=False)
 
+# to check with plot
+import matplotlib.pyplot as plt
+fig = plt.figure(figsize = (5, 5), dpi = 600)
+ax = plt.subplot()
+im = ax.imshow(G_)
+fig.suptitle(sub)
+plt.show()
+
+fig = plt.figure(figsize = (5, 5), dpi = 600)
+ax = plt.subplot()
+im = ax.imshow(nx.to_numpy_array(G))
+fig.suptitle(sub)
+plt.show()
