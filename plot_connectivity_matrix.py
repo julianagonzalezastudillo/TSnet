@@ -14,10 +14,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
 fc_path = path + 'fc_matrix/'
-net_path = path + 'net_metric/'
 plot_path = path + 'plots/'
-if not os.path.exists(net_path):
-    os.makedirs(net_path)
 
 # get metadata
 metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv')
