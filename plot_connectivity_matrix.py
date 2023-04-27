@@ -24,14 +24,11 @@ metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv')
 genot = metadata["genot"].unique()
 subjects = {genot[0]: list(metadata.loc[metadata['genot'] == genot[0], 'id_mouse']),
             genot[1]: list(metadata.loc[metadata['genot'] == genot[1], 'id_mouse'])}
-num_nodes = metadata['num_nodes']
-G_max = max(list(metadata['G_ctr_max']) + list(metadata['G_a5ia_max']))
-G_min = min(list(metadata['G_ctr_min']) + list(metadata['G_a5ia_min']))
 
 order = ['M2', 'AC', 'PrL', 'IL', 'DP']
 states = ['ctr', 'a5ia']
 
-cmap = matplotlib.colors.ListedColormap([(0., 0., 1.), "white", [1., .8, 0.], [1., .4, 0.], (1., 0., 0.)])
+cmap = matplotlib.colors.ListedColormap([(0., 0., 1.), [1., .8, 0.], [1., .4, 0.], (1., 0., 0.), ('#C700FF')])
 for sub_type in subjects.keys():
     print(sub_type)
     width_ratios = [i/min(metadata['num_nodes']) for i in metadata.loc[metadata['genot'] == sub_type, 'num_nodes']]
@@ -57,8 +54,10 @@ for sub_type in subjects.keys():
             G = G[:, order_by_region][order_by_region]  # reorder
 
             ax = plt.subplot(gs1[i])
-            bounds = [-np.max(G) * 1/4, -1e-16, np.max(G) * 1/4, np.max(G) * 2/4, np.max(G) * 3/4, np.max(G)]
+            bounds = [-np.max(G) * 1/4, 0, np.max(G) * 1/4, np.max(G) * 2/4, np.max(G) * 3/4, np.max(G)]
             norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+            cmap.set_bad(color = 'k', alpha = 1.)  # --> nan
+            G[G == 0] = np.nan
             im = ax.imshow(G, cmap=cmap, norm=norm)
             ax.set_title('Sub{0}'.format(str(sub).zfill(3)), fontsize=10, color='white')
 
@@ -72,8 +71,8 @@ for sub_type in subjects.keys():
                 r_sum = np.append(r_sum, r_sum[s] + region_count[r])
 
             for s in np.arange(1, len(r_sum)-1):
-                ax.axvline(r_sum[s], color='black', lw=0.4, clip_on=False, linestyle='--')
-                ax.axhline(r_sum[s], color='black', lw=0.4, clip_on=False, linestyle='--')
+                ax.axvline(r_sum[s], color='white', lw=0.4, clip_on=False, linestyle='--')
+                ax.axhline(r_sum[s], color='white', lw=0.4, clip_on=False, linestyle='--')
 
             # set xticks according to modules
             # xticklabels = [None] * (len(r_sum) + len(order))
@@ -85,6 +84,7 @@ for sub_type in subjects.keys():
             ax.set_xticklabels(r_sum, fontsize=6, color='white')
             ax.set_yticks(r_sum)
             ax.set_yticklabels(r_sum, fontsize=6, color='white')
+            [ax.spines[side].set_color('white') for side in ax.spines.keys()]
 
             # colorbar
             divider = make_axes_locatable(ax)
