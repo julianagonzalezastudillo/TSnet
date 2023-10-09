@@ -38,12 +38,12 @@ for sub_type in subjects.keys():
 
         for sub, i in zip(subjects[sub_type], range(len(subjects[sub_type]))):
             # load graph object from file
-            net_file_ctr = fc_path + '{0}_{1}_net'.format(sub, sub_state)
-            G = pickle.load(open('{0}.pickle'.format(net_file_ctr), 'rb'))
+            net_file = fc_path + '{0}_{1}_net'.format(sub, sub_state)
+            G = pickle.load(open('{0}.pickle'.format(net_file), 'rb'))
             region = nx.get_node_attributes(G, "region")
 
             # order by region clusters
-            G = order_by_region(G)  # reorder
+            G, _, _, _ = order_by_region(G)  # reorder
 
             ax = plt.subplot(gs1[i])
             bounds = [-np.max(G) * 1/4, 0, np.max(G) * 1/4, np.max(G) * 2/4, np.max(G) * 3/4, np.max(G)]
