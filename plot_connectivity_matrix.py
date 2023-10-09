@@ -6,10 +6,10 @@ import pandas as pd
 import networkx as nx
 from collections import Counter
 import matplotlib.pyplot as plt
-from matplotlib.colors import DivergingNorm
 import matplotlib.colors
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from tools import order_by_region
 
 
 path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
@@ -40,20 +40,15 @@ for sub_type in subjects.keys():
             # load graph object from file
             net_file_ctr = fc_path + '{0}_{1}_net'.format(sub, sub_state)
             G = pickle.load(open('{0}.pickle'.format(net_file_ctr), 'rb'))
+            region = nx.get_node_attributes(G, "region")
 
             # order by region clusters
-            region = nx.get_node_attributes(G, "region")
-            order_sort = sorted(zip(np.arange(0, G.number_of_nodes()), G.nodes(), region.values()),
-                                key = lambda node: [order.index(node[2])])
-            order_by_region = [n[0] for n in order_sort]
-
-            G = nx.to_numpy_array(G)  # transform to matrix
-            G = G[:, order_by_region][order_by_region]  # reorder
+            G = order_by_region(G)  # reorder
 
             ax = plt.subplot(gs1[i])
             bounds = [-np.max(G) * 1/4, 0, np.max(G) * 1/4, np.max(G) * 2/4, np.max(G) * 3/4, np.max(G)]
             norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
-            cmap.set_bad(color = 'k', alpha = 1.)  # --> nan
+            cmap.set_bad(color='k', alpha=1.)  # --> nan
             G[G == 0] = np.nan
             im = ax.imshow(G, cmap=cmap, norm=norm)
             ax.set_title('Sub{0}'.format(str(sub).zfill(3)), fontsize=10, color='white')
@@ -85,7 +80,7 @@ for sub_type in subjects.keys():
 
             # colorbar
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes('right', size = '5%', pad = 0.05)
+            cax = divider.append_axes('right', size='5%', pad=0.05)
             cbar = fig.colorbar(im, cax=cax, orientation='vertical')
             cbar_ticks = cbar.ax.get_yticks()
             cbar.ax.set_yticklabels(['{:.3f}'.format(x) for x in cbar_ticks], fontsize=6, color='white')
@@ -99,5 +94,5 @@ for sub_type in subjects.keys():
 
         # save
         fig.suptitle([sub_type, sub_state])
-        plt.savefig(plot_path + 'connectivity_matrices_{0}_{1}'.format(sub_type, sub_state), transparent=True)
-        plt.show()
+        plt.savefig(plot_path + 'connectivity_matrices_{0}_{1}_'.format(sub_type, sub_state), transparent=True)
+        # plt.show()
