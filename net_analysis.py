@@ -2,7 +2,6 @@ import os.path
 import pickle
 import numpy as np
 import pandas as pd
-import bct
 from tools import order_by_region
 
 
@@ -43,12 +42,12 @@ for sub_type in subjects.keys():
                 strength_out_in_balance = (strength_out - strength_in) / (strength_out + strength_in)
 
                 # Add to net metrics dict
-                Xnet[f"{region}_strength_intra"] = strength_intra
-                Xnet[f"{region}_strength_inter"] = strength_inter
-                Xnet[f"{region}_strength_balance"] = strength_inter_intra_balance
-                Xnet[f"{region}_strength_in"] = strength_in
-                Xnet[f"{region}_strength_out"] = strength_out
-                Xnet[f"{region}_strength_out_in_balance"] = strength_out_in_balance
+                Xnet[f"{region}_strength_intra"] = np.nan_to_num(strength_intra, nan=0.0)
+                Xnet[f"{region}_strength_inter"] = np.nan_to_num(strength_inter, nan=0.0)
+                Xnet[f"{region}_strength_inter_intra_balance"] = np.nan_to_num(strength_inter_intra_balance, nan=0.0)
+                Xnet[f"{region}_strength_in"] = np.nan_to_num(strength_in, nan=0.0)
+                Xnet[f"{region}_strength_out"] = np.nan_to_num(strength_out, nan=0.0)
+                Xnet[f"{region}_strength_out_in_balance"] = np.nan_to_num(strength_out_in_balance, nan=0.0)
             
             # Save the dictionary to a pickle file
             file_name = os.path.join(net_path, f"net_metric_{sub}_{sub_state}.pkl")
