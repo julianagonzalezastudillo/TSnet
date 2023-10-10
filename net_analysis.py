@@ -2,6 +2,7 @@ import os.path
 import pickle
 import numpy as np
 import pandas as pd
+import bct
 from tools import order_by_region
 
 
@@ -24,32 +25,30 @@ for sub_type in subjects.keys():
             net_file = os.path.join(fc_path, f"{sub}_{sub_state}_net")
             G = pickle.load(open("{0}.pickle".format(net_file), "rb"))
 
-            # network metrics
-            Xnet = {}
-            strength_in = np.array([v for k, v in G.in_degree(weight="weight")])
-            strength_out = np.array([v for k, v in G.out_degree(weight="weight")])
-            strength_out_in_balance = (strength_out - strength_in) / (strength_out + strength_in)
-
-            # Add to net metrics dict
-            Xnet["strength_in"] = strength_in
-            Xnet["strength_out"] = strength_out
-            Xnet["strength_out_in_balance"] = strength_out_in_balance
-
             # Per module ["M2", "AC", "PrL", "IL", "DP"]
+            Xnet = {}
             X, order_idx, order_node_name, order_region = order_by_region(G)
             for region in np.unique(order_region):
+                # strength intra and inter clusters
                 idx_intra = [idx for idx, r in zip(order_idx, order_region) if r == region]
                 idx_inter = [idx for idx, r in zip(order_idx, order_region) if r not in region]
 
                 strength_intra = np.sum(X[idx_intra][:, idx_intra])
                 strength_inter = np.sum(X[idx_intra][:, idx_inter])
-
                 strength_inter_intra_balance = (strength_inter - strength_intra) / (strength_inter + strength_intra)
+
+                # strength in and out clusters
+                strength_in = np.sum(X[idx_inter][:, idx_intra])  # indegree = column sum of X by regions
+                strength_out = np.sum(X[idx_intra][:, idx_inter])  # outdegree = row sum of X by regions
+                strength_out_in_balance = (strength_out - strength_in) / (strength_out + strength_in)
 
                 # Add to net metrics dict
                 Xnet[f"{region}_strength_intra"] = strength_intra
                 Xnet[f"{region}_strength_inter"] = strength_inter
                 Xnet[f"{region}_strength_balance"] = strength_inter_intra_balance
+                Xnet[f"{region}_strength_in"] = strength_in
+                Xnet[f"{region}_strength_out"] = strength_out
+                Xnet[f"{region}_strength_out_in_balance"] = strength_out_in_balance
             
             # Save the dictionary to a pickle file
             file_name = os.path.join(net_path, f"net_metric_{sub}_{sub_state}.pkl")
