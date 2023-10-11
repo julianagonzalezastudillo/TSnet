@@ -32,14 +32,15 @@ for sub_type in subjects.keys():
                 idx_intra = [idx for idx, r in zip(order_idx, order_region) if r == region]
                 idx_inter = [idx for idx, r in zip(order_idx, order_region) if r not in region]
 
-                strength_intra = np.sum(X[idx_intra][:, idx_intra])
-                strength_inter = np.sum(X[idx_intra][:, idx_inter])
-                strength_inter_intra_balance = (strength_inter - strength_intra) / (strength_inter + strength_intra)
-
                 # strength in and out clusters
                 strength_in = np.sum(X[idx_inter][:, idx_intra])  # indegree = column sum of X by regions
                 strength_out = np.sum(X[idx_intra][:, idx_inter])  # outdegree = row sum of X by regions
                 strength_out_in_balance = (strength_out - strength_in) / (strength_out + strength_in)
+
+                strength_intra = np.sum(X[idx_intra][:, idx_intra])
+                strength_inter = strength_in + strength_out
+                strength_inter_intra_balance = (strength_inter - strength_intra) / (strength_inter + strength_intra)
+
 
                 # Add to net metrics dict
                 Xnet[f"{region}_strength_intra"] = np.nan_to_num(strength_intra, nan=0.0)
