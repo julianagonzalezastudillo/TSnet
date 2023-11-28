@@ -39,45 +39,51 @@ metadata_ = pd.DataFrame()
 metadata_['id_mouse'] = metadata['id_mouse']
 metadata_['genot'] = metadata['genot']
 states = ['ctr', 'a5ia']
+# sigmas = ['', '1sigma_', '2sigma_']
+sigmas = ['']
 
-num_nodes = []
-for sub in metadata['id_mouse']:
-    edges_file = fc_path + '{0}_edges.csv'.format(sub)
-    nodes_file = fc_path + '{0}_node_attributes.csv'.format(sub)
+for sigma in sigmas:
+    num_nodes = []
+    for sub in metadata['id_mouse']:
+        edges_file = fc_path + '{0}{1}_edges.csv'.format(sigma, sub)
+        nodes_file = fc_path + '{0}_node_attributes.csv'.format(sub)
 
-    edges = pd.read_csv(edges_file)
-    edges = edges.drop(edges.columns[1], axis=1)
+        edges = pd.read_csv(edges_file)
+        edges = edges.drop(edges.columns[1], axis=1)
 
-    # nodes to keep that at least have one connection in one of the states
-    keep_nodes = np.sort(np.unique([edges['pre'], edges['post']]))
-    num_nodes = np.append(num_nodes, len(keep_nodes))
+        # nodes to keep that at least have one connection in one of the states
+        keep_nodes = np.sort(np.unique([edges['pre'], edges['post']]))
 
-    for sub_state in states:
-        edges_state = edges[edges['treatment'] == sub_state]
-        G_ = df_to_array(edges_state, keep_nodes)  # create array from csv
+        num_nodes = np.append(num_nodes, len(keep_nodes))
 
-        # convert to networkx graph object
-        G = nx.from_numpy_array(G_, create_using=nx.DiGraph)
-        mapping = dict(zip(G, keep_nodes))
-        G = nx.relabel_nodes(G, mapping)
+        for sub_state in states:
+            edges_state = edges[edges['treatment'] == sub_state]
+            G_ = df_to_array(edges_state, keep_nodes)  # create array from csv
 
-        # nodes info
-        nodes_region = pd.read_csv(nodes_file)
-        nodes_region = nodes_region.drop(nodes_region.columns[0], axis=1)
-        nodes_region = nodes_region[nodes_region['node_id'].isin(keep_nodes)]  # select keep_nodes
+            # convert to networkx graph object
+            G = nx.from_numpy_array(G_, create_using=nx.DiGraph)
+            mapping = dict(zip(G, keep_nodes))
+            G = nx.relabel_nodes(G, mapping)
 
-        # add node attributes
-        region = nodes_region.set_index('node_id')['region'].to_dict()
-        nx.set_node_attributes(G, region, "region")
+            # nodes info
+            nodes_region = pd.read_csv(nodes_file)
+            nodes_region = nodes_region.drop(nodes_region.columns[0], axis=1)
+            nodes_region = nodes_region[nodes_region['node_id'].isin(keep_nodes)]  # select keep_nodes
 
-        # save graph object to file
-        net_file = fc_path + '{0}_{1}_net'.format(sub, sub_state)
-        pickle.dump(G, open('{0}.pickle'.format(net_file), 'wb'))
+            # add node attributes
+            region = nodes_region.set_index('node_id')['region'].to_dict()
+            nx.set_node_attributes(G, region, "region")
 
-metadata_['num_nodes'] = num_nodes
+            # save graph object to file
+            net_file = os.path.join(path, f'{sub}_{sub_state}_net')
+            print(net_file)
+            # pickle.dump(G, open('{0}.pickle'.format(net_file), 'wb'))
 
-# save completed metadata
-metadata_.to_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv', index=False)
+    metadata_['num_nodes'] = num_nodes
+
+    # save completed metadata
+    metadata_file = os.path.join(path, f'Ts65Dn_npx_a5IA_metadata_updated.csv')
+    metadata_.to_csv(metadata_file, index=False)
 
 # to check with plot (not organized data)
 # import matplotlib.pyplot as plt
