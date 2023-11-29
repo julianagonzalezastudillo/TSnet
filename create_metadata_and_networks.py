@@ -1,14 +1,20 @@
-import os.path
+"""
+=================================
+            1.TSNET
+=================================
+This module is designed to transform data from .csv into networks.
+"""
+
 import pickle
 import numpy as np
 import pandas as pd
 import networkx as nx
-# import matplotlib.pyplot as plt
+from config import DATA_DIR, FC_DIR, STATES
 
 
 def build_matrix(df_edges, n):
     matrix = np.zeros((n, n), dtype=float)  # matrix (n,n)
-    for i, j, w in df_edges[['pre', 'post', 'sp_trans_p']].values:
+    for i, j, w in df_edges[["pre.1", "post", "sp_trans_p"]].values:
         matrix[int(i)][int(j)] = w
     return matrix
 
@@ -30,63 +36,56 @@ def df_to_array(df_edges, nodes):
     return matrix
 
 
-path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
-fc_path = path + 'fc_matrix/'
-
 # build/complete metadata
-metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata.csv')
-metadata_ = pd.DataFrame()
-metadata_['id_mouse'] = metadata['id_mouse']
-metadata_['genot'] = metadata['genot']
-states = ['ctr', 'a5ia']
-# sigmas = ['', '1sigma_', '2sigma_']
-sigmas = ['']
+metadata = pd.read_csv(DATA_DIR / "Ts65Dn_npx_a5IA_metadata.csv")
+metadata_ = metadata[["id_mouse", "genot"]].copy()
 
-for sigma in sigmas:
-    num_nodes = []
-    for sub in metadata['id_mouse']:
-        edges_file = fc_path + '{0}{1}_edges.csv'.format(sigma, sub)
-        nodes_file = fc_path + '{0}_node_attributes.csv'.format(sub)
+num_nodes = []
+for sub in metadata["id_mouse"]:
+    # Load subject edges
+    edges_file = FC_DIR / f"{sub}_edges.csv"
+    nodes_file = FC_DIR / f"{sub}_node_attributes.csv"
 
-        edges = pd.read_csv(edges_file)
-        edges = edges.drop(edges.columns[1], axis=1)
+    edges = pd.read_csv(edges_file)
+    edges = edges.drop(edges.columns[1], axis=1)
 
-        # nodes to keep that at least have one connection in one of the states
-        keep_nodes = np.sort(np.unique([edges['pre'], edges['post']]))
+    # nodes to keep that at least have one connection in one of the states
+    keep_nodes = np.sort(np.unique([edges["pre.1"], edges["post"]]))
 
-        num_nodes = np.append(num_nodes, len(keep_nodes))
+    num_nodes = np.append(num_nodes, len(keep_nodes))
 
-        for sub_state in states:
-            edges_state = edges[edges['treatment'] == sub_state]
-            G_ = df_to_array(edges_state, keep_nodes)  # create array from csv
+    for sub_state in STATES:
+        edges_state = edges[edges["treatment"] == sub_state]
+        G_ = df_to_array(edges_state, keep_nodes)  # create array from csv
 
-            # convert to networkx graph object
-            G = nx.from_numpy_array(G_, create_using=nx.DiGraph)
-            mapping = dict(zip(G, keep_nodes))
-            G = nx.relabel_nodes(G, mapping)
+        # convert to networkx graph object
+        G = nx.from_numpy_array(G_, create_using=nx.DiGraph)
+        mapping = dict(zip(G, keep_nodes))
+        G = nx.relabel_nodes(G, mapping)
 
-            # nodes info
-            nodes_region = pd.read_csv(nodes_file)
-            nodes_region = nodes_region.drop(nodes_region.columns[0], axis=1)
-            nodes_region = nodes_region[nodes_region['node_id'].isin(keep_nodes)]  # select keep_nodes
+        # Load node attributes
+        nodes_attributes = pd.read_csv(nodes_file)
 
-            # add node attributes
-            region = nodes_region.set_index('node_id')['region'].to_dict()
-            nx.set_node_attributes(G, region, "region")
+        # Add node attributes: regions and mode
+        region = nodes_attributes.set_index("node_id")["region"].to_dict()
+        nx.set_node_attributes(G, region, "region")
+        mode = nodes_attributes.set_index("node_id")["mode"].to_dict()
+        nx.set_node_attributes(G, region, "mode")
 
-            # save graph object to file
-            net_file = os.path.join(path, f'{sub}_{sub_state}_net')
-            print(net_file)
-            # pickle.dump(G, open('{0}.pickle'.format(net_file), 'wb'))
+        # save graph object to file
+        net_file = FC_DIR / f"{sub}_{sub_state}_net"
+        print(net_file)
+        pickle.dump(G, open(f"{net_file}.pickle", "wb"))
 
-    metadata_['num_nodes'] = num_nodes
+metadata_["num_nodes"] = num_nodes
 
-    # save completed metadata
-    metadata_file = os.path.join(path, f'Ts65Dn_npx_a5IA_metadata_updated.csv')
-    metadata_.to_csv(metadata_file, index=False)
+# save completed metadata
+metadata_file = DATA_DIR / "Ts65Dn_npx_a5IA_metadata_updated.csv"
+metadata_.to_csv(metadata_file, index=False)
 
 # to check with plot (not organized data)
 # import matplotlib.pyplot as plt
+#
 # fig = plt.figure(figsize=(5, 5), dpi=600)
 # ax = plt.subplot()
 # im = ax.imshow(G_)
