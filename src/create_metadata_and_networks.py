@@ -80,7 +80,7 @@ for sub in metadata["id_mouse"]:
 metadata_["num_nodes"] = num_nodes
 
 # save completed metadata
-metadata_file = DATA_DIR / "Ts65Dn_npx_a5IA_metadata_updated.csv"
+metadata_file = DATA_DIR / "Ts65Dn_npx_a5IA_metadata.csv"
 metadata_.to_csv(metadata_file, index=False)
 
 # to check with plot (not organized data)
