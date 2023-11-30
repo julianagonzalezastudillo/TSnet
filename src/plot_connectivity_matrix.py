@@ -4,27 +4,20 @@
 =================================
 This module is designed to plot connectivity matrices for both group of subjects (eu, ts) and in both states (ctr, a5ia)
 """
-from scipy import io
 import pickle
 import numpy as np
-import pandas as pd
 import networkx as nx
 from collections import Counter
 import matplotlib.pyplot as plt
 import matplotlib.colors
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from tools import order_by_region
-from config import FC_DIR, PLOT_DIR, METADATA, STATES, REGION_ORDER
+from tools import load_metadata, order_by_region
+from config import FC_DIR, PLOT_DIR, STATES, REGION_ORDER
 
 
 # get metadata
-metadata = pd.read_csv(METADATA)
-genot = metadata["genot"].unique()
-subjects = {
-    genot[0]: list(metadata.loc[metadata["genot"] == genot[0], "id_mouse"]),
-    genot[1]: list(metadata.loc[metadata["genot"] == genot[1], "id_mouse"]),
-}
+metadata, subjects = load_metadata()
 
 cmap = matplotlib.colors.ListedColormap(
     [(0.0, 0.0, 1.0), [1.0, 0.8, 0.0], [1.0, 0.4, 0.0], (1.0, 0.0, 0.0), ("#C700FF")]
