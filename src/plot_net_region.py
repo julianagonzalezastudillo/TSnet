@@ -5,13 +5,14 @@
 This module is designed to plot network properties: strength in/out and strength intra/inter
 """
 import pickle
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
-from tools import load_metadata
-from config import NET_DIR, PLOT_DIR, STATES, REGION_ORDER
 
+from config import NET_DIR, PLOT_DIR, STATES, REGION_ORDER, BINARIZE
+from tools import load_metadata
 
 # get metadata
 metadata, subjects = load_metadata()
@@ -38,10 +39,15 @@ for sub, sub_state in zip(
         net_list.append(Xnet)
         subs.append(sub)
         subs_state.append(sub_state)
+
+# Get net metrics names for regions analysis
 net_data = pd.DataFrame(net_list)
 net_data = net_data.fillna(0)
+filtered_columns = [
+    col for col in net_data.columns if col.startswith(tuple(REGION_ORDER))
+]
 net_metrics = np.unique(
-    ["_".join(metric.split("_")[1:]) for metric in net_data.columns]
+    ["_".join(metric.split("_")[1:]) for metric in filtered_columns]
 )
 net_data["id_mouse"] = subs
 net_data["state"] = subs_state
@@ -83,8 +89,10 @@ for state in STATES:
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
         plt.legend(fontsize=14)
-        min_limit = 0 if metadata[metric].min() > 0 else metadata[metric].min()
-        plt.ylim(min_limit - 0.1, 1.1)
+
+        if not BINARIZE:
+            min_limit = 0 if metadata[metric].min() > 0 else metadata[metric].min()
+            plt.ylim(min_limit - 0.1, 1.1)
         nodes_file = PLOT_DIR / f"{metric}_{state}.png"
-        # plt.savefig(nodes_file, dpi=300, bbox_inches='tight', transparent=True)
+        plt.savefig(nodes_file, dpi=300, bbox_inches="tight", transparent=True)
         plt.show()
