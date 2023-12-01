@@ -71,6 +71,12 @@ for sub_type in subjects.keys():
             n_edges = len(X[X != 0])
             Xnet["n_edges"] = n_edges
 
+            # Density
+            N = len(X)
+            n_edges_total = N * (N - 1)
+            density = n_edges / n_edges_total * 100
+            Xnet["density"] = density
+
             # Save the dictionary to a pickle file
             file_name = NET_DIR / f"net_metric_{sub}_{sub_state}.pkl"
             with open(file_name, "wb") as pickle_file:
