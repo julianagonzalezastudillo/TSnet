@@ -89,11 +89,11 @@ for sub_type in subjects.keys():
                 )
 
             # set xticks according to modules
-            # xticklabels = [None] * (len(r_sum) + len(REGION_ORDER))
-            # xticklabels[::2] = r_sum
-            # xticklabels[1::2] = REGION_ORDER
-            # xticks = xticklabels.copy()
-            # xticks[1::2] = (np.array(xticklabels[::2]) / 2)[1:]
+            xticklabels = [None] * (len(r_sum) + len(REGION_ORDER))
+            xticklabels[::2] = r_sum
+            xticklabels[1::2] = REGION_ORDER
+            xticks = xticklabels.copy()
+            xticks[1::2] = (np.array(xticklabels[::2]) / 2)[1:]
 
             # Set number of nodes on xticks
             ax.set_xticks(r_sum)
@@ -101,6 +101,27 @@ for sub_type in subjects.keys():
             ax.set_yticks(r_sum)
             ax.set_yticklabels(r_sum, fontsize=6, color="white")
             [ax.spines[side].set_color("white") for side in ax.spines.keys()]
+
+            # Add additional xticks in the middle
+            middle_ticks = np.convolve(r_sum, [0.5, 0.5], mode="valid")
+            ax.set_xticks(middle_ticks, minor=True)
+            ax.set_xticklabels(
+                REGION_ORDER,
+                rotation=45,
+                fontsize=8,
+                va="center",
+                color="white",
+                minor=True,
+            )
+            ax.set_yticks(middle_ticks, minor=True)
+            ax.set_yticklabels(
+                REGION_ORDER,
+                rotation=45,
+                fontsize=8,
+                va="center",
+                color="white",
+                minor=True,
+            )
 
             # colorbar
             if not BINARIZE:
