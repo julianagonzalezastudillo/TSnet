@@ -5,9 +5,11 @@
 This module is designed to extract network properties from FC matrices: strength in/out and strength intra/inter
 """
 import pickle
+
 import numpy as np
-from tools import load_metadata, order_by_region
+
 from config import FC_DIR, NET_DIR, STATES
+from tools import load_metadata, order_by_region
 
 # get metadata
 metadata, subjects = load_metadata()

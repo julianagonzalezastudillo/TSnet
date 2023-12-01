@@ -6,16 +6,21 @@ This module is designed to transform data from .csv into networks.
 """
 
 import pickle
+
+import networkx as nx
 import numpy as np
 import pandas as pd
-import networkx as nx
-from config import DATA_DIR, FC_DIR, STATES
+
+from config import FC_DIR, METADATA, STATES, BINARIZE
 
 
 def build_matrix(df_edges, n):
     matrix = np.zeros((n, n), dtype=float)  # matrix (n,n)
     for i, j, w in df_edges[["pre.1", "post", "sp_trans_p"]].values:
-        matrix[int(i)][int(j)] = w
+        if BINARIZE:
+            matrix[int(i)][int(j)] = 1
+        else:
+            matrix[int(i)][int(j)] = w
     return matrix
 
 
@@ -37,8 +42,7 @@ def df_to_array(df_edges, nodes):
 
 
 # build/complete metadata
-metadata = pd.read_csv(DATA_DIR / "Ts65Dn_npx_a5IA_metadata.csv")
-metadata_ = metadata[["id_mouse", "genot"]].copy()
+metadata = pd.read_csv(METADATA)
 
 num_nodes = []
 for sub in metadata["id_mouse"]:
@@ -77,23 +81,22 @@ for sub in metadata["id_mouse"]:
         print(net_file)
         pickle.dump(G, open(f"{net_file}.pickle", "wb"))
 
-metadata_["num_nodes"] = num_nodes
+metadata["num_nodes"] = num_nodes
 
 # save completed metadata
-metadata_file = DATA_DIR / "Ts65Dn_npx_a5IA_metadata.csv"
-metadata_.to_csv(metadata_file, index=False)
+metadata.to_csv(METADATA, index=False)
 
 # to check with plot (not organized data)
-# import matplotlib.pyplot as plt
-#
-# fig = plt.figure(figsize=(5, 5), dpi=600)
-# ax = plt.subplot()
-# im = ax.imshow(G_)
-# fig.suptitle(sub)
-# plt.show()
-#
-# fig = plt.figure(figsize=(5, 5), dpi=600)
-# ax = plt.subplot()
-# im = ax.imshow(nx.to_numpy_array(G))
-# fig.suptitle(sub)
-# plt.show()
+import matplotlib.pyplot as plt
+
+fig = plt.figure(figsize=(5, 5), dpi=600)
+ax = plt.subplot()
+im = ax.imshow(G_)
+fig.suptitle(sub)
+plt.show()
+
+fig = plt.figure(figsize=(5, 5), dpi=600)
+ax = plt.subplot()
+im = ax.imshow(nx.to_numpy_array(G))
+fig.suptitle(sub)
+plt.show()
