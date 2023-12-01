@@ -33,7 +33,7 @@ for sub_type in subjects.keys():
                     idx for idx, r in zip(order_idx, order_region) if r not in region
                 ]
 
-                # strength in and out clusters
+                # strength in and out regions
                 strength_in = np.sum(
                     X[idx_inter][:, idx_intra]  # in_degree = column sum of X by regions
                 )
@@ -43,6 +43,8 @@ for sub_type in subjects.keys():
                 strength_out_in_balance = (strength_out - strength_in) / (
                     strength_out + strength_in
                 )
+
+                # strength intra and inter regions
                 strength_intra = np.sum(X[idx_intra][:, idx_intra])
                 strength_inter = strength_in + strength_out
                 strength_inter_intra_balance = (strength_inter - strength_intra) / (
@@ -64,6 +66,10 @@ for sub_type in subjects.keys():
                 Xnet[f"{region}_strength_out_in_balance"] = np.nan_to_num(
                     strength_out_in_balance, nan=0.0
                 )
+
+            # Number of connections
+            n_edges = len(X[X != 0])
+            Xnet["n_edges"] = n_edges
 
             # Save the dictionary to a pickle file
             file_name = NET_DIR / f"net_metric_{sub}_{sub_state}.pkl"
