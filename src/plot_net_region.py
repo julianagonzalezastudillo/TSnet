@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from config import NET_DIR, PLOT_DIR, STATES, REGION_ORDER, BINARIZE
+from config import NET_DIR, PLOT_DIR, STATES, GENOT, REGION_ORDER, BINARIZE
 from tools import load_metadata
 
 # get metadata
@@ -69,15 +69,15 @@ for index, row in metadata.iterrows():
         metadata.loc[index, metric] = value.values[0]
 
 # Create a boxplot using Seaborn
-for state in STATES:
+for genot in GENOT:
     for metric in net_metrics:
         plt.figure(figsize=(10, 6))
         sns.boxplot(
-            data=metadata[metadata["state"] == state],
+            data=metadata[metadata["genot"] == genot],
             x="region",
             y=metric,
-            hue="genot",
-            palette="Set3",
+            hue="state",
+            palette="Set1",
             order=REGION_ORDER,
         )
         # sns.boxplot(data=metadata, x='region', y='strength_inter', hue='state', palette='Set3', width=0.5)
@@ -85,7 +85,7 @@ for state in STATES:
         # Add labels and legend
         plt.xlabel("")
         plt.ylabel("")
-        plt.title(f"{state} {metric}", fontsize=16)
+        plt.title(f"{genot} {metric}", fontsize=16)
         plt.xticks(fontsize=14)
         plt.yticks(fontsize=14)
         plt.legend(fontsize=14)
@@ -93,6 +93,6 @@ for state in STATES:
         if not BINARIZE:
             min_limit = 0 if metadata[metric].min() > 0 else metadata[metric].min()
             plt.ylim(min_limit - 0.1, 1.1)
-        nodes_file = PLOT_DIR / f"{metric}_{state}.png"
+        nodes_file = PLOT_DIR / f"{metric}_{genot}.png"
         plt.savefig(nodes_file, dpi=300, bbox_inches="tight", transparent=True)
         plt.show()
