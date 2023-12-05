@@ -1,3 +1,9 @@
+"""
+=================================
+            TSNET
+=================================
+This module is design to load data.
+"""
 import pickle
 
 import networkx as nx
@@ -40,23 +46,29 @@ def order_by_region(G):
 
 
 def load_net_metrics():
+    """
+    Load local metrics computed in net_analysis.py and rearrange them in a dataframe
+    :return:
+        netdata: dataframe with metadata + local network metrics.
+        net_metrics: network metrics names.
+    """
     # get metadata
-    metadata, subjects = load_metadata()
+    netdata, subjects = load_metadata()
 
-    # add states to metadata
-    metadata = pd.concat([metadata] * len(STATES), ignore_index=True)
-    metadata["state"] = STATES * int(len(metadata) / len(STATES))
+    # add states to netdata
+    netdata = pd.concat([netdata] * len(STATES), ignore_index=True)
+    netdata["state"] = STATES * int(len(netdata) / len(STATES))
 
-    # add regions to metadata
-    metadata = pd.concat([metadata] * len(REGION_ORDER), ignore_index=True)
-    metadata["region"] = REGION_ORDER * int(len(metadata) / len(REGION_ORDER))
+    # add regions to netdata
+    netdata = pd.concat([netdata] * len(REGION_ORDER), ignore_index=True)
+    netdata["region"] = REGION_ORDER * int(len(netdata) / len(REGION_ORDER))
 
     # Load data from Xnet for each subject and build data frame
     net_list = []
     subs = []
     subs_state = []
     for sub, sub_state in zip(
-        metadata["id_mouse"], STATES * int(len(np.unique(metadata["id_mouse"])))
+        netdata["id_mouse"], STATES * int(len(np.unique(netdata["id_mouse"])))
     ):
         # Load data
         file_name = NET_DIR / f"net_metric_{sub}_{sub_state}.pkl"
@@ -79,10 +91,10 @@ def load_net_metrics():
     net_data["state"] = subs_state
 
     # Initialize metrics column with None values
-    metadata.update({metric: [None] * len(metadata) for metric in net_metrics})
+    netdata.update({metric: [None] * len(netdata) for metric in net_metrics})
 
     # Fill metrics columns
-    for index, row in metadata.iterrows():
+    for index, row in netdata.iterrows():
         sub = row["id_mouse"]
         state = row["state"]
         region = row["region"]
@@ -92,6 +104,6 @@ def load_net_metrics():
                 "_".join([region, metric]),
             ]
             # Set the new value for the 'metric' column
-            metadata.loc[index, metric] = value.values[0]
+            netdata.loc[index, metric] = value.values[0]
 
-    return metadata
+    return netdata, net_metrics
