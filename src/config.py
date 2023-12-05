@@ -14,6 +14,7 @@ PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Constants
 STATES = ["ctr", "a5ia"]
+GENOT = ["eu", "ts"]
 REGION_ORDER = ["M2", "AC", "PrL", "IL", "DP"]
 BINARIZE = True
 
