@@ -1,3 +1,9 @@
+"""
+=================================
+            TSNET
+=================================
+Configuration file with path, file names and constant values.
+"""
 import os.path
 from pathlib import Path
 
