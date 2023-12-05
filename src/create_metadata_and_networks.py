@@ -53,8 +53,13 @@ for sub in metadata["id_mouse"]:
     edges = pd.read_csv(edges_file)
     edges = edges.drop(edges.columns[1], axis=1)
 
+    # Load node attributes
+    nodes_attributes = pd.read_csv(nodes_file)
+    region = nodes_attributes.set_index("node_id")["region"].to_dict()
+    mode = nodes_attributes.set_index("node_id")["mode"].to_dict()
+
     # nodes to keep that at least have one connection in one of the states
-    keep_nodes = np.sort(np.unique([edges["pre.1"], edges["post"]]))
+    keep_nodes = np.unique(nodes_attributes["node_id"])
 
     num_nodes = np.append(num_nodes, len(keep_nodes))
 
@@ -67,13 +72,8 @@ for sub in metadata["id_mouse"]:
         mapping = dict(zip(G, keep_nodes))
         G = nx.relabel_nodes(G, mapping)
 
-        # Load node attributes
-        nodes_attributes = pd.read_csv(nodes_file)
-
         # Add node attributes: regions and mode
-        region = nodes_attributes.set_index("node_id")["region"].to_dict()
         nx.set_node_attributes(G, region, "region")
-        mode = nodes_attributes.set_index("node_id")["mode"].to_dict()
         nx.set_node_attributes(G, region, "mode")
 
         # save graph object to file
@@ -87,16 +87,16 @@ metadata["num_nodes"] = num_nodes
 metadata.to_csv(METADATA, index=False)
 
 # to check with plot (not organized data)
-import matplotlib.pyplot as plt
-
-fig = plt.figure(figsize=(5, 5), dpi=600)
-ax = plt.subplot()
-im = ax.imshow(G_)
-fig.suptitle(sub)
-plt.show()
-
-fig = plt.figure(figsize=(5, 5), dpi=600)
-ax = plt.subplot()
-im = ax.imshow(nx.to_numpy_array(G))
-fig.suptitle(sub)
-plt.show()
+# import matplotlib.pyplot as plt
+#
+# fig = plt.figure(figsize=(5, 5), dpi=600)
+# ax = plt.subplot()
+# im = ax.imshow(G_)
+# fig.suptitle(sub)
+# plt.show()
+#
+# fig = plt.figure(figsize=(5, 5), dpi=600)
+# ax = plt.subplot()
+# im = ax.imshow(nx.to_numpy_array(G))
+# fig.suptitle(sub)
+# plt.show()
