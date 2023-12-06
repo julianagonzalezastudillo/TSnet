@@ -45,13 +45,14 @@ def order_by_region(G):
     return G, order_idx, order_node_name, order_region
 
 
-def load_net_metrics():
+def load_net_metrics(scale="local"):
     """
     Load local metrics computed in net_analysis.py and rearrange them in a dataframe
     :return:
         netdata: dataframe with metadata + local network metrics.
         net_metrics: network metrics names.
     """
+    scale = "local"
     # get metadata
     netdata, subjects = load_metadata()
 
@@ -60,8 +61,9 @@ def load_net_metrics():
     netdata["state"] = STATES * int(len(netdata) / len(STATES))
 
     # add regions to netdata
-    netdata = pd.concat([netdata] * len(REGION_ORDER), ignore_index=True)
-    netdata["region"] = REGION_ORDER * int(len(netdata) / len(REGION_ORDER))
+    if scale == "local":
+        netdata = pd.concat([netdata] * len(REGION_ORDER), ignore_index=True)
+        netdata["region"] = REGION_ORDER * int(len(netdata) / len(REGION_ORDER))
 
     # Load data from Xnet for each subject and build data frame
     net_list = []
@@ -79,14 +81,20 @@ def load_net_metrics():
             subs_state.append(sub_state)
 
     # Get net metrics names for regions analysis
-    net_data = pd.DataFrame(net_list)
-    net_data = net_data.fillna(0)
-    filtered_columns = [
-        col for col in net_data.columns if col.startswith(tuple(REGION_ORDER))
-    ]
-    net_metrics = np.unique(
-        ["_".join(metric.split("_")[1:]) for metric in filtered_columns]
-    )
+    net_data = pd.DataFrame(net_list).fillna(0)
+
+    if scale == "local":
+        filtered_columns = net_data.columns[
+            net_data.columns.str.startswith(tuple(REGION_ORDER))
+        ]
+        net_metrics = np.unique(
+            ["_".join(metric.split("_")[1:]) for metric in filtered_columns]
+        )
+    elif scale == "global":
+        net_metrics = np.array(
+            net_data.columns[~net_data.columns.str.startswith(tuple(REGION_ORDER))]
+        )
+
     net_data["id_mouse"] = subs
     net_data["state"] = subs_state
 
@@ -95,14 +103,19 @@ def load_net_metrics():
 
     # Fill metrics columns
     for index, row in netdata.iterrows():
-        sub = row["id_mouse"]
-        state = row["state"]
-        region = row["region"]
         for metric in net_metrics:
-            value = net_data.loc[
-                (net_data["id_mouse"] == sub) & (net_data["state"] == state),
-                "_".join([region, metric]),
-            ]
+            if scale == "local":
+                value = net_data.loc[
+                    (net_data["id_mouse"] == row["id_mouse"])
+                    & (net_data["state"] == row["state"]),
+                    "_".join([row["region"], metric]),
+                ]
+            else:
+                value = net_data.loc[
+                    (net_data["id_mouse"] == row["id_mouse"])
+                    & (net_data["state"] == row["state"]),
+                    metric,
+                ]
             # Set the new value for the 'metric' column
             netdata.loc[index, metric] = value.values[0]
 
