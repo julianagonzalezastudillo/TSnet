@@ -6,15 +6,15 @@ import pandas as pd
 import networkx as nx
 from collections import Counter
 import matplotlib.pyplot as plt
-from matplotlib.colors import DivergingNorm
+# from matplotlib.colors import DivergingNorm
 import matplotlib.colors
 import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
-fc_path = path + 'fc_matrix/'
-plot_path = path + 'plots/'
+path = r'C:\Users\javier.zorrilla\ownCloud\Labo\Experiments\Networks\\'
+fc_path = path #+ 'fc_matrix/'
+plot_path = path #+ 'plots\\'
 
 # get metadata
 metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv')

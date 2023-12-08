@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import networkx as nx
+import os
 # import matplotlib.pyplot as plt
 
 
@@ -24,8 +25,9 @@ def df_to_array(df_edges, nodes):
     return matrix
 
 
-path = '/Users/juliana.gonzalez/ownCloud/Juli-Javi/'
-fc_path = path + 'fc_matrix/'
+path = r'C:\Users\javier.zorrilla\ownCloud\Labo\Experiments\Networks\\'
+
+fc_path = path #+ 'fc_matrix\\'
 
 # build/complete metadata
 metadata = pd.read_csv(path + 'Ts65Dn_npx_a5IA_metadata.csv')
@@ -80,7 +82,7 @@ metadata_.to_csv(path + 'Ts65Dn_npx_a5IA_metadata_updated.csv', index=False)
 # im = ax.imshow(G_)
 # fig.suptitle(sub)
 # plt.show()
-#
+
 # fig = plt.figure(figsize = (5, 5), dpi = 600)
 # ax = plt.subplot()
 # im = ax.imshow(nx.to_numpy_array(G))
