@@ -56,7 +56,7 @@ for sub in metadata["id_mouse"]:
     # Load node attributes
     nodes_attributes = pd.read_csv(nodes_file)
     region = nodes_attributes.set_index("node_id")["region"].to_dict()
-    mode = nodes_attributes.set_index("node_id")["mode"].to_dict()
+    modulus = nodes_attributes.set_index("node_id")["moduls"].to_dict()
 
     # nodes to keep that at least have one connection in one of the states
     keep_nodes = np.unique(nodes_attributes["node_id"])
@@ -74,7 +74,7 @@ for sub in metadata["id_mouse"]:
 
         # Add node attributes: regions and mode
         nx.set_node_attributes(G, region, "region")
-        nx.set_node_attributes(G, region, "mode")
+        nx.set_node_attributes(G, region, "moduls")
 
         # save graph object to file
         net_file = FC_DIR / f"{sub}_{sub_state}_net"
