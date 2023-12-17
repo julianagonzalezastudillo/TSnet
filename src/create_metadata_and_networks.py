@@ -74,7 +74,7 @@ for sub in metadata["id_mouse"]:
 
         # Add node attributes: regions and mode
         nx.set_node_attributes(G, region, "region")
-        nx.set_node_attributes(G, region, "moduls")
+        nx.set_node_attributes(G, modulus, "moduls")
 
         # save graph object to file
         net_file = FC_DIR / f"{sub}_{sub_state}_net"
