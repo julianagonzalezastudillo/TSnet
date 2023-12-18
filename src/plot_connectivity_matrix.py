@@ -14,8 +14,19 @@ import networkx as nx
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from config import FC_DIR, PLOT_DIR, STATES, REGION_ORDER, BINARIZE
-from tools import load_metadata, order_by_region
+from config import (
+    FC_DIR,
+    PLOT_DIR,
+    ATTRIBUTE,
+    MODULS_ORDER,
+    REGION_ORDER,
+    BINARIZE,
+    STATES,
+)
+from tools import load_metadata, order_by_attribute
+
+# Use a dictionary to map ATTRIBUTE to its corresponding order
+ATT_ORDER = {"region": REGION_ORDER, "moduls": MODULS_ORDER}[ATTRIBUTE]
 
 # get metadata
 metadata, subjects = load_metadata()
@@ -47,10 +58,14 @@ for sub_type in subjects.keys():
             # load graph object from file
             net_file = FC_DIR / f"{sub}_{sub_state}_net"
             G = pickle.load(open(f"{net_file}.pickle", "rb"))
-            region = nx.get_node_attributes(G, "region")
+            region = nx.get_node_attributes(G, ATTRIBUTE)
+
+            # count nodes per region
+            attribute_count = Counter(region.values())
+            print(attribute_count)
 
             # order by region clusters
-            G, _, _, _ = order_by_region(G)  # reorder
+            G, _, _, _ = order_by_attribute(G, order=ATTRIBUTE)  # reorder
 
             ax = plt.subplot(gs1[i])
             if not BINARIZE:
@@ -71,14 +86,10 @@ for sub_type in subjects.keys():
             im = ax.imshow(G, cmap=cmap, norm=norm)
             ax.set_title("Sub{0}".format(str(sub).zfill(3)), fontsize=10, color="white")
 
-            # count nodes per region
-            region_count = Counter(region.values())
-            print(region_count)
-
             # thick line between regions
             r_sum = [0]
-            for r, s in zip(REGION_ORDER, range(len(REGION_ORDER))):
-                r_sum = np.append(r_sum, r_sum[s] + region_count[r])
+            for r, s in zip(ATT_ORDER, range(len(ATT_ORDER))):
+                r_sum = np.append(r_sum, r_sum[s] + attribute_count[r])
 
             for s in np.arange(1, len(r_sum) - 1):
                 ax.axvline(
@@ -89,9 +100,9 @@ for sub_type in subjects.keys():
                 )
 
             # set xticks according to modules
-            xticklabels = [None] * (len(r_sum) + len(REGION_ORDER))
+            xticklabels = [None] * (len(r_sum) + len(ATT_ORDER))
             xticklabels[::2] = r_sum
-            xticklabels[1::2] = REGION_ORDER
+            xticklabels[1::2] = ATT_ORDER
             xticks = xticklabels.copy()
             xticks[1::2] = (np.array(xticklabels[::2]) / 2)[1:]
 
@@ -106,7 +117,7 @@ for sub_type in subjects.keys():
             middle_ticks = np.convolve(r_sum, [0.5, 0.5], mode="valid")
             ax.set_xticks(middle_ticks, minor=True)
             ax.set_xticklabels(
-                REGION_ORDER,
+                ATT_ORDER,
                 rotation=45,
                 fontsize=8,
                 va="center",
@@ -115,7 +126,7 @@ for sub_type in subjects.keys():
             )
             ax.set_yticks(middle_ticks, minor=True)
             ax.set_yticklabels(
-                REGION_ORDER,
+                ATT_ORDER,
                 rotation=45,
                 fontsize=8,
                 va="center",
@@ -143,7 +154,7 @@ for sub_type in subjects.keys():
         # save
         fig.suptitle([sub_type, sub_state])
         plt.savefig(
-            PLOT_DIR / f"connectivity_matrices_{sub_type}_{sub_state}",
+            PLOT_DIR / f"connectivity_matrices_{sub_type}_{sub_state}_{ATTRIBUTE}",
             transparent=True,
         )
         plt.show()
