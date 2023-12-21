@@ -25,6 +25,24 @@ def load_metadata():
 
 
 def order_by_attribute(G, order="region"):
+    """
+    Orders a graph G based on a specified attribute.
+
+    :param G: NetworkX graph
+        The graph to be ordered.
+    :param order: str, optional
+        The attribute based on which the graph should be ordered. Default is "region".
+    :return: tuple
+        A tuple containing:
+        - G: numpy.ndarray
+            The ordered adjacency matrix of the graph.
+        - order_idx: list
+            A list containing the indices of nodes after ordering.
+        - order_node_name: list
+            A list containing the names of nodes after ordering.
+        - order_attribute: list
+            A list containing the values of the specified attribute after ordering.
+    """
     # order by region clusters
     attribute = nx.get_node_attributes(G, order)
 
