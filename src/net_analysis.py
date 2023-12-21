@@ -32,9 +32,7 @@ for sub_type in subjects.keys():
                     idx for idx, r in zip(order_idx, order_attribute) if r == attribute
                 ]
                 idx_inter = [
-                    idx
-                    for idx, r in zip(order_idx, order_attribute)
-                    if r not in attribute
+                    idx for idx, r in zip(order_idx, order_attribute) if r != attribute
                 ]
 
                 # strength in and out attributes
@@ -86,6 +84,6 @@ for sub_type in subjects.keys():
             Xnet["density"] = density
 
             # Save the dictionary to a pickle file
-            file_name = NET_DIR / f"net_metric_{sub}_{sub_state}_{attribute}.pkl"
+            file_name = NET_DIR / f"net_metric_{sub}_{sub_state}_{ATTRIBUTE}.pkl"
             with open(file_name, "wb") as pickle_file:
                 pickle.dump(Xnet, pickle_file)
