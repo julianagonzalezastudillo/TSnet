@@ -11,7 +11,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from config import FC_DIR, METADATA, STATES, BINARIZE
+from config import DATA_DIR, FC_DIR, METADATA, STATES, BINARIZE
 
 
 def build_matrix(df_edges, n):
@@ -47,8 +47,8 @@ metadata = pd.read_csv(METADATA)
 num_nodes = []
 for sub in metadata["id_mouse"]:
     # Load subject edges
-    edges_file = FC_DIR / f"{sub}_edges.csv"
-    nodes_file = FC_DIR / f"{sub}_node_attributes.csv"
+    edges_file = DATA_DIR / f"{sub}_edges.csv"
+    nodes_file = DATA_DIR / f"{sub}_node_attributes.csv"
 
     edges = pd.read_csv(edges_file)
     edges = edges.drop(edges.columns[1], axis=1)
