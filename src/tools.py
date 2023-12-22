@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from config import NET_DIR, METADATA, MODULS_ORDER, REGION_ORDER, STATES
+from config import NET_DIR, METADATA, MODULS_ORDER, REGION_ORDER, STATES, ATTRIBUTE
 
 
 # Function to load data
@@ -83,14 +83,17 @@ def load_net_metrics(scale="local", attribute="region"):
     # get metadata
     netdata, subjects = load_metadata()
 
+    # Use a dictionary to map ATTRIBUTE to its corresponding order
+    att_order = {"region": REGION_ORDER, "moduls": MODULS_ORDER}[ATTRIBUTE]
+
     # add states to netdata
     netdata = pd.concat([netdata] * len(STATES), ignore_index=True)
     netdata["state"] = STATES * int(len(netdata) / len(STATES))
 
     # add regions to netdata
     if scale == "local":
-        netdata = pd.concat([netdata] * len(REGION_ORDER), ignore_index=True)
-        netdata["region"] = REGION_ORDER * int(len(netdata) / len(REGION_ORDER))
+        netdata = pd.concat([netdata] * len(att_order), ignore_index=True)
+        netdata[ATTRIBUTE] = att_order * int(len(netdata) / len(att_order))
 
     # Load data from Xnet for each subject and build data frame
     net_list = []
@@ -112,14 +115,14 @@ def load_net_metrics(scale="local", attribute="region"):
 
     if scale == "local":
         filtered_columns = net_data.columns[
-            net_data.columns.str.startswith(tuple(REGION_ORDER))
+            net_data.columns.str.startswith(tuple(att_order))
         ]
         net_metrics = np.unique(
             ["_".join(metric.split("_")[1:]) for metric in filtered_columns]
         )
     elif scale == "global":
         net_metrics = np.array(
-            net_data.columns[~net_data.columns.str.startswith(tuple(REGION_ORDER))]
+            net_data.columns[~net_data.columns.str.startswith(tuple(att_order))]
         )
 
     net_data["id_mouse"] = subs
@@ -135,7 +138,7 @@ def load_net_metrics(scale="local", attribute="region"):
                 value = net_data.loc[
                     (net_data["id_mouse"] == row["id_mouse"])
                     & (net_data["state"] == row["state"]),
-                    "_".join([row["region"], metric]),
+                    "_".join([row[attribute], metric]),
                 ]
             else:
                 value = net_data.loc[
