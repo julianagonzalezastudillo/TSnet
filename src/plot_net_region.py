@@ -21,6 +21,7 @@ from tools import load_net_metrics
 
 # Use a dictionary to map ATTRIBUTE to its corresponding order
 ATT_ORDER = {"region": REGION_ORDER, "moduls": MODULS_ORDER}[ATTRIBUTE]
+palette = {"state": "Set1", "genot": "Set2"}
 
 # get netdata
 netdata, net_metrics = load_net_metrics(scale="local", attribute=ATTRIBUTE)
@@ -37,7 +38,7 @@ for key, values in genot_state.items():
                 x="region",
                 y=metric,
                 hue=hue,
-                palette="Set1",
+                palette=palette[key],
                 order=ATT_ORDER,
             )
             # sns.boxplot(data=metadata, x='region', y='strength_inter', hue='state', palette='Set3', width=0.5)
