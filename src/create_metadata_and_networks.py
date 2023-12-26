@@ -43,6 +43,7 @@ def df_to_array(df_edges, nodes):
 
 # build/complete metadata
 metadata = pd.read_csv(METADATA)
+binarize = "bin" if BINARIZE else "nonbin"
 
 num_nodes = []
 for sub in metadata["id_mouse"]:
@@ -56,7 +57,8 @@ for sub in metadata["id_mouse"]:
     # Load node attributes
     nodes_attributes = pd.read_csv(nodes_file)
     region = nodes_attributes.set_index("node_id")["region"].to_dict()
-    modulus = nodes_attributes.set_index("node_id")["moduls"].to_dict()
+    moduls = nodes_attributes.set_index("node_id")["moduls"].to_dict()
+    moduls = {k: str(v) for k, v in moduls.items()}
 
     # nodes to keep that at least have one connection in one of the states
     keep_nodes = np.unique(nodes_attributes["node_id"])
@@ -74,10 +76,10 @@ for sub in metadata["id_mouse"]:
 
         # Add node attributes: regions and mode
         nx.set_node_attributes(G, region, "region")
-        nx.set_node_attributes(G, modulus, "moduls")
+        nx.set_node_attributes(G, moduls, "moduls")
 
         # save graph object to file
-        net_file = FC_DIR / f"{sub}_{sub_state}_net"
+        net_file = FC_DIR / f"{sub}_{sub_state}_{binarize}_net"
         print(net_file)
         pickle.dump(G, open(f"{net_file}.pickle", "wb"))
 
