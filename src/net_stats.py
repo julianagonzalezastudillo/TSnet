@@ -21,7 +21,7 @@ from config import (
 from tools import load_net_metrics
 
 
-def perform_t_test(data, genot, state, attr, ATTR, metric, scale):
+def perform_t_test(data, genot, state, metric, ATTR, attr=None):
     """
     Perform a statistical t-test across genotypes (eu, ts) or states (ctr, a5ia; paired t-test).
 
@@ -57,7 +57,7 @@ def perform_t_test(data, genot, state, attr, ATTR, metric, scale):
     common_conditions1 = (data["genot"] == genot[0]) & (data["state"] == state[0])
     common_conditions2 = (data["genot"] == genot[1]) & (data["state"] == state[1])
 
-    if scale == "local":
+    if attr:
         # Additional condition for 'local' scale
         common_conditions1 &= data[ATTR] == attr
         common_conditions2 &= data[ATTR] == attr
@@ -86,19 +86,14 @@ for scale in ["local", "global"]:
     netdata, net_metrics = load_net_metrics(
         scale=scale, binarize=binarize, attribute=ATTRIBUTE
     )
+    att_order = ATT_ORDER if scale == "local" else [None]
 
     # Perform paired t-test across genotypes
     results_genot = [
         perform_t_test(
-            netdata,
-            [genot, genot],
-            ["ctr", "a5ia"],
-            attribute,
-            ATTRIBUTE,
-            metric,
-            scale,
+            netdata, [genot, genot], ["ctr", "a5ia"], metric, ATTRIBUTE, attr=attribute
         )
-        for genot, attribute, metric in itertools.product(GENOT, ATT_ORDER, net_metrics)
+        for genot, attribute, metric in itertools.product(GENOT, att_order, net_metrics)
     ]
 
     # Convert the list of results into a DataFrame
@@ -111,16 +106,10 @@ for scale in ["local", "global"]:
     # Perform paired t-test across states
     results_state = [
         perform_t_test(
-            netdata,
-            ["eu", "ts"],
-            [state, state],
-            attribute,
-            ATTRIBUTE,
-            metric,
-            scale,
+            netdata, ["eu", "ts"], [state, state], metric, ATTRIBUTE, attr=attribute
         )
         for state, attribute, metric in itertools.product(
-            STATES, ATT_ORDER, net_metrics
+            STATES, att_order, net_metrics
         )
     ]
 
@@ -130,3 +119,5 @@ for scale in ["local", "global"]:
     result_df_state.to_csv(
         RES_DIR / f"Ts65Dn_stats_genot_{binarize}_{ATTRIBUTE}_{scale}.csv", index=False
     )
+
+# put alkl stats togueter
