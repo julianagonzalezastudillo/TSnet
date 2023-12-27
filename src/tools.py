@@ -64,10 +64,12 @@ def order_by_attribute(G, order="region"):
     return G, order_idx, order_node_name, order_attribute
 
 
-def load_net_metrics(scale="local", attribute="region"):
+def load_net_metrics(scale="local", binarize="bin", attribute="region"):
     """
     Load local or global network metrics computed in net_analysis.py and organize them in a dataframe.
 
+    :param binarize: str,
+        Binarization method, either "bin" or "nonbin"
     :param scale: str, optional
         The scale of the metrics, either "local" or "global". Defaults to "local".
     :param attribute: str, optional
@@ -103,7 +105,7 @@ def load_net_metrics(scale="local", attribute="region"):
         netdata["id_mouse"], STATES * int(len(np.unique(netdata["id_mouse"])))
     ):
         # Load data
-        file_name = NET_DIR / f"net_metric_{sub}_{sub_state}_{attribute}.pkl"
+        file_name = NET_DIR / f"net_metric_{sub}_{sub_state}_{binarize}_{attribute}.pkl"
         with open(file_name, "rb") as pickle_file:
             Xnet = pickle.load(pickle_file)
             net_list.append(Xnet)

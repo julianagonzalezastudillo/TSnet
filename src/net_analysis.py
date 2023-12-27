@@ -8,17 +8,18 @@ import pickle
 
 import numpy as np
 
-from config import FC_DIR, NET_DIR, ATTRIBUTE, STATES
+from config import FC_DIR, NET_DIR, ATTRIBUTE, STATES, BINARIZE
 from tools import load_metadata, order_by_attribute
 
 # get metadata
 metadata, subjects = load_metadata()
+binarize = "bin" if BINARIZE else "nonbin"
 
 for sub_type in subjects.keys():
     for sub_state in STATES:
         for sub in subjects[sub_type]:
             # load graph object from file
-            net_file = FC_DIR / f"{sub}_{sub_state}_net"
+            net_file = FC_DIR / f"{sub}_{sub_state}_{binarize}_net"
             G = pickle.load(open(f"{net_file}.pickle", "rb"))
 
             # Per module ["M2", "AC", "PrL", "IL", "DP"]
@@ -84,6 +85,8 @@ for sub_type in subjects.keys():
             Xnet["density"] = density
 
             # Save the dictionary to a pickle file
-            file_name = NET_DIR / f"net_metric_{sub}_{sub_state}_{ATTRIBUTE}.pkl"
+            file_name = (
+                NET_DIR / f"net_metric_{sub}_{sub_state}_{binarize}_{ATTRIBUTE}.pkl"
+            )
             with open(file_name, "wb") as pickle_file:
                 pickle.dump(Xnet, pickle_file)

@@ -9,23 +9,48 @@ import itertools
 import pandas as pd
 import scipy.stats as stats
 
-from config import RES_DIR, GENOT, STATES, REGION_ORDER, MODULS_ORDER, ATTRIBUTE
+from config import (
+    RES_DIR,
+    GENOT,
+    STATES,
+    REGION_ORDER,
+    MODULS_ORDER,
+    ATTRIBUTE,
+    BINARIZE,
+)
 from tools import load_net_metrics
 
 
-def perform_t_test(data, genot, state, attr, ATTR, metric, scale="local"):
+def perform_t_test(data, genot, state, attr, ATTR, metric, scale):
     """
-    Perform statistical test across genotypes (eu, ts) or states (ctr, a5ia).
+    Perform a statistical t-test across genotypes (eu, ts) or states (ctr, a5ia; paired t-test).
 
-    :param scale:
-    :param data: data frame with netdata
-    :param genot: list with two possible genotypes ["eu", "ts"] or ["eu", "eu"] or ["ts", "ts"]
-    :param state: list with two possible states ["ctr", "a5ia"] or ["ctr", "ctr"] or ["a5ia", "a5ia"]
-    :param attr: select attribute
-    :param ATTR:
-    :param metric: selected metric
-    :return: [state_or_genot, attr, metric, t_val, p_val]
-
+    :param scale: str, optional
+        The scale of the analysis, either "local" or "global". Defaults to "local".
+    :param data: pd.DataFrame
+        DataFrame containing network data.
+    :param genot: list of str
+        List with two possible genotypes ["eu", "ts"] or ["eu", "eu"] or ["ts", "ts"].
+    :param state: list of str
+        List with two possible states ["ctr", "a5ia"] or ["ctr", "ctr"] or ["a5ia", "a5ia"].
+    :param attr: str
+        Selected attribute for filtering.
+    :param ATTR: str
+        Type of attribute for filtering, either "region" or "modulus".
+    :param metric: str
+        Selected metric for the t-test.
+    :return: list
+        A list containing the results of the t-test:
+        - state_or_genot: str
+            The state or genotype under analysis.
+        - attr: str
+            The selected attribute.
+        - metric: str
+            The selected metric.
+        - t_val: float
+            The calculated t-value.
+        - p_val: float
+            The calculated p-value.
     """
 
     # Common conditions for both 'local' and 'global' scales
@@ -42,6 +67,7 @@ def perform_t_test(data, genot, state, attr, ATTR, metric, scale="local"):
     group2_data = data.loc[common_conditions2, metric]
 
     if genot[0] == genot[1]:
+        # Paired t-test
         t_val, p_val = stats.ttest_rel(group1_data, group2_data)
         state_or_genot = genot[0]
     else:
@@ -53,50 +79,54 @@ def perform_t_test(data, genot, state, attr, ATTR, metric, scale="local"):
 
 # Use a dictionary to map ATTRIBUTE to its corresponding order
 ATT_ORDER = {"region": REGION_ORDER, "moduls": MODULS_ORDER}[ATTRIBUTE]
-SCALE = "local"
+binarize = "bin" if BINARIZE else "nonbin"
 
-# get netdata
-netdata, net_metrics = load_net_metrics(scale=SCALE, attribute=ATTRIBUTE)
-
-# Perform paired t-test across genotypes
-results_genot = [
-    perform_t_test(
-        netdata,
-        [genot, genot],
-        ["ctr", "a5ia"],
-        attribute,
-        ATTRIBUTE,
-        metric,
-        scale=SCALE,
+for scale in ["local", "global"]:
+    # get netdata
+    netdata, net_metrics = load_net_metrics(
+        scale=scale, binarize=binarize, attribute=ATTRIBUTE
     )
-    for genot, attribute, metric in itertools.product(GENOT, ATT_ORDER, net_metrics)
-]
 
-# Convert the list of results into a DataFrame
-columns = ["genot", ATTRIBUTE, "metric", "t_val", "p_val"]
-result_df_genot = pd.DataFrame(results_genot, columns=columns)
-result_df_genot.to_csv(
-    RES_DIR / f"Ts65Dn_stats_state_{ATTRIBUTE}_{SCALE}.csv", index=False
-)
+    # Perform paired t-test across genotypes
+    results_genot = [
+        perform_t_test(
+            netdata,
+            [genot, genot],
+            ["ctr", "a5ia"],
+            attribute,
+            ATTRIBUTE,
+            metric,
+            scale,
+        )
+        for genot, attribute, metric in itertools.product(GENOT, ATT_ORDER, net_metrics)
+    ]
 
-
-# Perform paired t-test across states
-results_state = [
-    perform_t_test(
-        netdata,
-        ["eu", "ts"],
-        [state, state],
-        attribute,
-        ATTRIBUTE,
-        metric,
-        scale=SCALE,
+    # Convert the list of results into a DataFrame
+    columns = ["genot", ATTRIBUTE, "metric", "t_val", "p_val"]
+    result_df_genot = pd.DataFrame(results_genot, columns=columns)
+    result_df_genot.to_csv(
+        RES_DIR / f"Ts65Dn_stats_state_{binarize}_{ATTRIBUTE}_{scale}.csv", index=False
     )
-    for state, attribute, metric in itertools.product(STATES, ATT_ORDER, net_metrics)
-]
 
-# Convert the list of results into a DataFrame
-columns = ["state", ATTRIBUTE, "metric", "t_val", "p_val"]
-result_df_state = pd.DataFrame(results_state, columns=columns)
-result_df_state.to_csv(
-    RES_DIR / f"Ts65Dn_stats_genot_{ATTRIBUTE}_{SCALE}.csv", index=False
-)
+    # Perform paired t-test across states
+    results_state = [
+        perform_t_test(
+            netdata,
+            ["eu", "ts"],
+            [state, state],
+            attribute,
+            ATTRIBUTE,
+            metric,
+            scale,
+        )
+        for state, attribute, metric in itertools.product(
+            STATES, ATT_ORDER, net_metrics
+        )
+    ]
+
+    # Convert the list of results into a DataFrame
+    columns = ["state", ATTRIBUTE, "metric", "t_val", "p_val"]
+    result_df_state = pd.DataFrame(results_state, columns=columns)
+    result_df_state.to_csv(
+        RES_DIR / f"Ts65Dn_stats_genot_{binarize}_{ATTRIBUTE}_{scale}.csv", index=False
+    )
