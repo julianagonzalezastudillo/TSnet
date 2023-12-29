@@ -4,6 +4,7 @@
 =================================
 This module is design to perform a Student t-test for independent samples between
 """
+import glob
 import itertools
 
 import pandas as pd
@@ -11,6 +12,7 @@ import scipy.stats as stats
 
 from config import (
     RES_DIR,
+    STATS_DIR,
     GENOT,
     STATES,
     REGION_ORDER,
@@ -99,8 +101,12 @@ for scale in ["local", "global"]:
     # Convert the list of results into a DataFrame
     columns = ["genot", ATTRIBUTE, "metric", "t_val", "p_val"]
     result_df_genot = pd.DataFrame(results_genot, columns=columns)
+
+    # Add binarize column
+    result_df_genot["binarize"] = binarize
     result_df_genot.to_csv(
-        RES_DIR / f"Ts65Dn_stats_state_{binarize}_{ATTRIBUTE}_{scale}.csv", index=False
+        STATS_DIR / f"Ts65Dn_stats_state_{binarize}_{ATTRIBUTE}_{scale}.csv",
+        index=False,
     )
 
     # Perform paired t-test across states
@@ -116,8 +122,44 @@ for scale in ["local", "global"]:
     # Convert the list of results into a DataFrame
     columns = ["state", ATTRIBUTE, "metric", "t_val", "p_val"]
     result_df_state = pd.DataFrame(results_state, columns=columns)
+
+    # Add binarize column
+    result_df_state["binarize"] = binarize
     result_df_state.to_csv(
-        RES_DIR / f"Ts65Dn_stats_genot_{binarize}_{ATTRIBUTE}_{scale}.csv", index=False
+        STATS_DIR / f"Ts65Dn_stats_genot_{binarize}_{ATTRIBUTE}_{scale}.csv",
+        index=False,
     )
 
-# put alkl stats togueter
+# Put all stats together in one file
+csv_files = glob.glob(str(STATS_DIR / "*.csv"))
+
+if len(csv_files) == 16:
+    # Loop through each CSV file and load it into a DataFrame
+    dfs = []
+    for csv_file in csv_files:
+        df = pd.read_csv(csv_file)
+        dfs.append(df)
+
+    # Concatenate the list of DataFrames into a single DataFrame
+    combined_df = pd.concat(dfs, ignore_index=True)
+
+    # Reorganize colomns and save
+    desired_order = [
+        "genot",
+        "state",
+        "binarize",
+        "region",
+        "moduls",
+        "metric",
+        "t_val",
+        "p_val",
+    ]
+    result_df = pd.DataFrame(combined_df, columns=desired_order)
+
+    # Fill nan with corresponding values
+    result_df["genot"].fillna("eu-ts", inplace=True)
+    result_df["state"].fillna("ctr-a5ia", inplace=True)
+    result_df["moduls"].fillna("-", inplace=True)
+    result_df["region"].fillna("-", inplace=True)
+
+    result_df.to_csv(RES_DIR / f"Ts65Dn_stats_genot.csv", index=False)
