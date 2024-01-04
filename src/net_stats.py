@@ -104,10 +104,11 @@ for scale in ["local", "global"]:
 
     # Add binarize column
     result_df_genot["binarize"] = binarize
-    result_df_genot.to_csv(
-        STATS_DIR / f"Ts65Dn_stats_state_{binarize}_{ATTRIBUTE}_{scale}.csv",
-        index=False,
+    file_name_genot = (
+        STATS_DIR
+        / f"Ts65Dn_stats_state_{binarize}_{'' if scale == 'global' else ATTRIBUTE + '_'}{scale}.csv"
     )
+    result_df_genot.to_csv(file_name_genot, index=False)
 
     # Perform paired t-test across states
     results_state = [
@@ -125,15 +126,16 @@ for scale in ["local", "global"]:
 
     # Add binarize column
     result_df_state["binarize"] = binarize
-    result_df_state.to_csv(
-        STATS_DIR / f"Ts65Dn_stats_genot_{binarize}_{ATTRIBUTE}_{scale}.csv",
-        index=False,
+    file_name_state = (
+        STATS_DIR
+        / f"Ts65Dn_stats_genot_{binarize}_{'' if scale == 'global' else ATTRIBUTE + '_'}{scale}.csv"
     )
+    result_df_state.to_csv(file_name_state, index=False)
 
 # Put all stats together in one file
 csv_files = glob.glob(str(STATS_DIR / "*.csv"))
 
-if len(csv_files) == 16:
+if len(csv_files) == 12:
     # Loop through each CSV file and load it into a DataFrame
     dfs = []
     for csv_file in csv_files:
@@ -143,7 +145,7 @@ if len(csv_files) == 16:
     # Concatenate the list of DataFrames into a single DataFrame
     combined_df = pd.concat(dfs, ignore_index=True)
 
-    # Reorganize colomns and save
+    # Reorganize columns and save
     desired_order = [
         "genot",
         "state",
