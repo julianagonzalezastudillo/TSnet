@@ -21,10 +21,13 @@ from tools import load_net_metrics
 
 # Use a dictionary to map ATTRIBUTE to its corresponding order
 ATT_ORDER = {"region": REGION_ORDER, "moduls": MODULS_ORDER}[ATTRIBUTE]
+binarize = "bin" if BINARIZE else "nonbin"
 palette = {"state": "Set1", "genot": "Set2"}
 
 # get netdata
-netdata, net_metrics = load_net_metrics(scale="local", attribute=ATTRIBUTE)
+netdata, net_metrics = load_net_metrics(
+    scale="local", binarize=binarize, attribute=ATTRIBUTE
+)
 
 # Create a boxplot using Seaborn
 genot_state = {"genot": GENOT, "state": STATES}
@@ -35,7 +38,7 @@ for key, values in genot_state.items():
             hue = "state" if key == "genot" else "genot"
             sns.boxplot(
                 data=netdata[netdata[key] == value],
-                x="region",
+                x=ATTRIBUTE,
                 y=metric,
                 hue=hue,
                 palette=palette[key],
@@ -54,6 +57,6 @@ for key, values in genot_state.items():
             if not BINARIZE:
                 min_limit = 0 if netdata[metric].min() > 0 else netdata[metric].min()
                 plt.ylim(min_limit - 0.1, 1.1)
-            nodes_file = PLOT_DIR / f"{metric}_{value}_{ATTRIBUTE}.png"
-            plt.savefig(nodes_file, dpi=300, bbox_inches="tight", transparent=True)
+            plot_file = PLOT_DIR / f"{ATTRIBUTE}_{value}_{binarize}_{metric}.png"
+            plt.savefig(plot_file, dpi=300, bbox_inches="tight", transparent=True)
             plt.show()
