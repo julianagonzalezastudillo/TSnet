@@ -49,7 +49,7 @@ for key, values in genot_state.items():
             # Add labels and legend
             plt.xlabel("")
             plt.ylabel("")
-            plt.title(f"{value} {metric}", fontsize=16)
+            plt.title(f"{binarize} {value} {metric}", fontsize=16)
             plt.xticks(fontsize=14)
             plt.yticks(fontsize=14)
             plt.legend(fontsize=14)
@@ -58,5 +58,5 @@ for key, values in genot_state.items():
                 min_limit = 0 if netdata[metric].min() > 0 else netdata[metric].min()
                 plt.ylim(min_limit - 0.1, 1.1)
             plot_file = PLOT_DIR / f"{ATTRIBUTE}_{value}_{binarize}_{metric}.png"
-            plt.savefig(plot_file, dpi=300, bbox_inches="tight", transparent=True)
-            plt.show()
+            plt.savefig(plot_file, dpi=300, bbox_inches="tight", transparent=False)
+            # plt.show()
