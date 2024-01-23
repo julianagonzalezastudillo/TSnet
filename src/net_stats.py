@@ -76,7 +76,10 @@ def perform_t_test(data, genot, state, metric, ATTR, attr=None):
         t_val, p_val = stats.ttest_ind(group1_data, group2_data, equal_var=False)
         state_or_genot = state[0]
 
-    return [state_or_genot, attr, metric, t_val, p_val]
+    mean1 = group1_data.mean()
+    mean2 = group2_data.mean()
+
+    return [state_or_genot, attr, metric, mean1, mean2, t_val, p_val]
 
 
 # Use a dictionary to map ATTRIBUTE to its corresponding order
@@ -99,7 +102,7 @@ for scale in ["local", "global"]:
     ]
 
     # Convert the list of results into a DataFrame
-    columns = ["genot", ATTRIBUTE, "metric", "t_val", "p_val"]
+    columns = ["genot", ATTRIBUTE, "metric", "mean1", "mean2", "t_val", "p_val"]
     result_df_genot = pd.DataFrame(results_genot, columns=columns)
 
     # Add binarize column
@@ -121,7 +124,7 @@ for scale in ["local", "global"]:
     ]
 
     # Convert the list of results into a DataFrame
-    columns = ["state", ATTRIBUTE, "metric", "t_val", "p_val"]
+    columns = ["state", ATTRIBUTE, "metric", "mean1", "mean2", "t_val", "p_val"]
     result_df_state = pd.DataFrame(results_state, columns=columns)
 
     # Add binarize column
@@ -153,6 +156,8 @@ if len(csv_files) == 12:
         "region",
         "moduls",
         "metric",
+        "mean1",
+        "mean2",
         "t_val",
         "p_val",
     ]
