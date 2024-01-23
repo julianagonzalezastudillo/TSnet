@@ -71,15 +71,19 @@ def perform_t_test(data, genot, state, metric, ATTR, attr=None):
     if genot[0] == genot[1]:
         # Paired t-test
         t_val, p_val = stats.ttest_rel(group1_data, group2_data)
+        # t_val, p_val = stats.wilcoxon(group1_data, group2_data)
         state_or_genot = genot[0]
     else:
         t_val, p_val = stats.ttest_ind(group1_data, group2_data, equal_var=False)
+        # t_val, p_val = stats.mannwhitneyu(group1_data, group2_data)
         state_or_genot = state[0]
 
     mean1 = group1_data.mean()
+    var1 = group1_data.var()
     mean2 = group2_data.mean()
+    var2 = group2_data.var()
 
-    return [state_or_genot, attr, metric, mean1, mean2, t_val, p_val]
+    return [state_or_genot, attr, metric, mean1, var1, mean2, var2, t_val, p_val]
 
 
 # Use a dictionary to map ATTRIBUTE to its corresponding order
@@ -102,7 +106,17 @@ for scale in ["local", "global"]:
     ]
 
     # Convert the list of results into a DataFrame
-    columns = ["genot", ATTRIBUTE, "metric", "mean1", "mean2", "t_val", "p_val"]
+    columns = [
+        "genot",
+        ATTRIBUTE,
+        "metric",
+        "mean1",
+        "var1",
+        "mean2",
+        "var2",
+        "t_val",
+        "p_val",
+    ]
     result_df_genot = pd.DataFrame(results_genot, columns=columns)
 
     # Add binarize column
@@ -124,7 +138,17 @@ for scale in ["local", "global"]:
     ]
 
     # Convert the list of results into a DataFrame
-    columns = ["state", ATTRIBUTE, "metric", "mean1", "mean2", "t_val", "p_val"]
+    columns = [
+        "state",
+        ATTRIBUTE,
+        "metric",
+        "mean1",
+        "var1",
+        "mean2",
+        "var2",
+        "t_val",
+        "p_val",
+    ]
     result_df_state = pd.DataFrame(results_state, columns=columns)
 
     # Add binarize column
@@ -157,7 +181,9 @@ if len(csv_files) == 12:
         "moduls",
         "metric",
         "mean1",
+        "var1",
         "mean2",
+        "var2",
         "t_val",
         "p_val",
     ]
